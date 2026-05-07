@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Music Player</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #121212;
+    color: white;
+    display: flex;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    background: black;
+    padding: 20px;
+}
+
+.sidebar h2 {
+    color: #1db954;
+}
+
+#search {
+    width: 100%;
+    padding: 8px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: none;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+li {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #222;
+}
+
+li:hover {
+    background: #1db954;
+}
+
+/* Main */
+.main {
+    flex: 1;
+    text-align: center;
+    padding: 40px;
+}
+
+img {
+    width: 250px;
+    border-radius: 15px;
+    margin-bottom: 10px;
+}
+
+#progress, #volume {
+    width: 60%;
+    margin: 15px 0;
+}
+
+.controls button {
+    padding: 12px;
+    margin: 10px;
+    border: none;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.play {
+    background: #1db954;
+    color: white;
+}
+
+.other {
+    background: #333;
+    color: white;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>🎵 My Player</h2>
+    <input type="text" id="search" placeholder="Search..." onkeyup="searchSong()">
+    <ul id="playlist"></ul>
+</div>
+
+<div class="main">
+    <img id="cover" src="https://picsum.photos/300">
+    <h2 id="title">Select Song</h2>
+    <p id="artist"></p>
+
+    <audio id="audio"></audio>
+
+    <!-- Progress -->
+    <input type="range" id="progress" value="0">
+
+    <!-- Controls -->
+    <div class="controls">
+        <button class="other" onclick="prevSong()">⏮</button>
+        <button class="play" onclick="playPause()" id="ctrl">▶</button>
+        <button class="other" onclick="nextSong()">⏭</button>
+    </div>
+
+    <!-- Volume -->
+    <p>🔊 Volume</p>
+    <input type="range" id="volume" min="0" max="1" step="0.1">
+
+    <p id="time">00:00 / 00:00</p>
+</div>
+
+<script>
+let songs = [
+{
+    name: "Treat You Better",
+    artist: "Shawn Mendes",
+    src: "song1.mp3",
+    cover: "Treat_You_Better_(Official_Single_Cover)_by_Shawn_Mendes.png"
+},
+{
+    name: "Cheap Thrills",
+    artist: "Sia ft. Sean Paul",
+    src: "song2.mp3",
+    cover: "hq720.jpg"
+},
+{
+    name: "Diamonds",
+    artist: "Rihanna",
+    src: "song3.mp3",
+    cover: "Diamonds_-_Rihanna.png"
+}
+];
+
+let index = 0;
+let audio = document.getElementById("audio");
+let progress = document.getElementById("progress");
+let ctrl = document.getElementById("ctrl");
+let volume = document.getElementById("volume");
+let playlist = document.getElementById("playlist");
+
+/* Load Playlist */
+function loadPlaylist(){
+    playlist.innerHTML = "";
+    songs.forEach((song, i)=>{
+        let li = document.createElement("li");
+        li.innerText = song.name;
+        li.onclick = ()=>playSong(i);
+        playlist.appendChild(li);
+    });
+}
+
+/* Load Song */
+function loadSong(i){
+    audio.src = songs[i].src;
+    audio.load();
+    document.getElementById("title").innerText = songs[i].name;
+    document.getElementById("artist").innerText = songs[i].artist;
+    document.getElementById("cover").src = songs[i].cover;
+}
+
+/* Play Song */
+function playSong(i){
+    index = i;
+    loadSong(i);
+    audio.play();
+    ctrl.innerText = "⏸";
+}
+
+/* Play Pause */
+function playPause(){
+    if(audio.paused){
+        audio.play();
+        ctrl.innerText = "⏸";
+    } else {
+        audio.pause();
+        ctrl.innerText = "▶";
+    }
+}
+
+/* Next */
+function nextSong(){
+    index = (index + 1) % songs.length;
+    playSong(index);
+}
+
+/* Prev */
+function prevSong(){
+    index = (index - 1 + songs.length) % songs.length;
+    playSong(index);
+}
+
+/* Progress */
+audio.addEventListener("timeupdate", ()=>{
+    progress.value = (audio.currentTime / audio.duration) * 100;
+
+    let current = formatTime(audio.currentTime);
+    let duration = formatTime(audio.duration);
+    document.getElementById("time").innerText = current + " / " + duration;
+});
+
+/* Seek */
+progress.onchange = function(){
+    audio.currentTime = (progress.value / 100) * audio.duration;
+};
+
+/* Volume */
+volume.oninput = function(){
+    audio.volume = volume.value;
+};
+
+/* Time Format */
+function formatTime(sec){
+    if(isNaN(sec)) return "00:00";
+    let m = Math.floor(sec/60);
+    let s = Math.floor(sec%60);
+    if(s < 10) s = "0" + s;
+    return m + ":" + s;
+}
+
+/* Search */
+function searchSong(){
+    let input = document.getElementById("search").value.toLowerCase();
+    let items = playlist.getElementsByTagName("li");
+
+    for(let i=0;i<items.length;i++){
+        let text = items[i].innerText.toLowerCase();
+        items[i].style.display = text.includes(input) ? "" : "none";
+    }
+}
+
+audio.addEventListener("ended", nextSong);
+
+loadPlaylist();
+loadSong(index);
+</script>
+
+</body>
+</html>
